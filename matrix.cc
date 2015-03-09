@@ -50,17 +50,14 @@ Matrix::set(int row, int col, double value) {
 
 Matrix *
 Matrix::transpose() {
-  double *tmpdata = new double[rows*cols];
+  Matrix *mnew = new Matrix(cols, rows);
 
   for (int ind_col = 0; ind_col < cols; ind_col++) {
     for (int ind_row = 0; ind_row < rows; ind_row++) {
-      tmpdata[ind_row + ind_col*rows] = data[ind_col + ind_row*cols];
+      mnew->data[ind_row + ind_col*rows] = data[ind_col + ind_row*cols];
     }
   }
 
-  Matrix *mnew = new Matrix(cols, rows, tmpdata);
-
-  delete [] tmpdata;
   return mnew;
 }
 
@@ -75,20 +72,16 @@ Matrix::submatrix(const int row1, const int row2,
   assert(col2<cols);
 
   int num_rows=row2-row1+1, num_cols=col2-col1+1;
+  Matrix *subm = new Matrix(num_rows, num_cols);
 
   double *tmpdata = new double[num_rows*num_cols];
-  for (int ind=0;ind<num_rows*num_cols;ind++) {
-    tmpdata[ind] = 0;
-  }
   for (int ind_row = 0; ind_row < num_rows; ind_row++) {
     for (int ind_col = 0; ind_col < num_cols; ind_col++) {
       int ind1 = ind_row*num_cols + ind_col;
       int ind2 = col1 + ind_col + (row1 + ind_row)*cols;
-      tmpdata[ind1] = data[ind2];
+      subm->data[ind1] = data[ind2];
     }
   }
-  Matrix *subm = new Matrix(num_rows, num_cols, tmpdata);
-  delete [] tmpdata;
   return subm;
 }
 
@@ -99,16 +92,17 @@ Matrix::submatrix(vector <int> subrows, vector <int> subcols) {
 
     double *tmpdata = new double[nrows * ncols];
     int row, col;
+    Matrix *mnew = new Matrix(subrows.size(), subcols.size());
 
     for (int ind_row=0;ind_row < nrows; ind_row++) {
         row = subrows[ind_row];
+        assert(row >= 0 && row < rows);
         for (int ind_col=0;ind_col < ncols; ind_col++) {
             col = subcols[ind_col];
-            tmpdata[ind_col + ind_row*ncols] = data[col + row*cols];
+            assert(col >= 0 && col < cols);
+            mnew->data[ind_col + ind_row*ncols] = data[col + row*cols];
         }
     }
-    Matrix *mnew = new Matrix(subrows.size(), subcols.size(), tmpdata);
-    delete [] tmpdata;
     return mnew;
 }
 
@@ -118,42 +112,27 @@ Matrix::add(const Matrix &m2) {
 
   assert(rows == m2.rows);
   assert(cols == m2.cols);
-
-  copy(data, data+rows*cols, tmpdata);
+  Matrix *mnew = new Matrix(rows, cols, data);
 
   // Ystävyys on vaatimus vain ERITYYPPISTEN luokkien välillä eikä 
   // yhden luokan instanssien (olioiden) välillä. Täten voimme kirjoittaa:
 
   for (int ind=0; ind < rows*cols; ind++) {
-    tmpdata[ind] += m2.data[ind];
+    mnew->data[ind] += m2.data[ind];
   }
 
-  /* eikä tarvitse:
-  for (int ind_row=0; ind_row < rows; ind_row++) {
-    for (int ind_col=0; ind_col < cols; ind_col++) {
-      tmpdata[ind_col + ind_row*cols] += m2.value(ind_row, ind_col);
-    }
-  }
-  */
-  Matrix *mnew = new Matrix(rows, cols, tmpdata);
-  delete [] tmpdata;
   return mnew;
 }
 
 Matrix *
 Matrix::subtract(const Matrix &m2) {
-  double * tmpdata = new double[rows*cols];
-
   assert(rows == m2.rows);
   assert(cols == m2.cols);
-
-  copy(data, data+rows*cols, tmpdata);
+  Matrix *mnew = new Matrix(rows, cols, data);
 
   for (int ind=0; ind < rows*cols; ind++) {
-    tmpdata[ind] -= m2.data[ind];
+    mnew->data[ind] -= m2.data[ind];
   }
-  Matrix *mnew = new Matrix(rows, cols, tmpdata);
-  delete [] tmpdata;
   return mnew;
 }
 
@@ -169,12 +148,7 @@ Matrix::mul_right(const Matrix &m2) {
 
   new_rows = rows;
   new_cols = m2.cols;
-
-  double *tmpdata = new double[new_rows*new_cols];
-
-  for (int ind = 0; ind < new_rows*new_cols; ind++) {
-    tmpdata[ind] = 0;
-  }
+  Matrix *mnew = new Matrix(new_rows, new_cols);
 
   int ind, ind2;
   for (int ind_row = 0; ind_row < new_rows; ind_row++) {
@@ -187,13 +161,11 @@ Matrix::mul_right(const Matrix &m2) {
       ind = ind_col + ind_row*new_cols;
 
       for (int ind_prod = 0; ind_prod < cols; ind_prod++) {
-	tmpdata[ind] += data[ind_prod + ind2] 
-	           * m2.data[ind_prod*m2.cols + ind_col];
+        mnew->data[ind] += data[ind_prod + ind2]
+                         * m2.data[ind_prod*m2.cols + ind_col];
       }
     }
   }
-  Matrix *mnew = new Matrix(new_rows, new_cols, tmpdata);
-  delete [] tmpdata;
   return mnew;
 }
 
@@ -216,24 +188,18 @@ Matrix::mul_left(const Matrix &m2) {
   new_cols = cols;
   new_rows = m2.rows;
 
-  double *tmpdata = new double[new_rows*new_cols];
-
-  for (int ind = 0; ind < new_rows*new_cols; ind++) {
-    tmpdata[ind] = 0;
-  }
+  Matrix *mnew = new Matrix(new_rows, new_cols);
 
   int ind;
   for (int ind_row = 0; ind_row < new_rows; ind_row++) {
     for (int ind_col = 0; ind_col < new_cols; ind_col++) {
       ind = ind_col + ind_row*new_cols;
       for (int ind_prod = 0; ind_prod < rows; ind_prod++) {
-	tmpdata[ind] += m2.data[ind_prod + ind_row*m2.cols] 
-	                 * data[ind_prod*cols + ind_col];
+        mnew->data[ind] += m2.data[ind_prod + ind_row*m2.cols]
+                         * data[ind_prod*cols + ind_col];
       }
     }
   }
-  Matrix *mnew = new Matrix(new_rows, new_cols, tmpdata);
-  delete [] tmpdata;
   return mnew;
 }
 
@@ -374,8 +340,8 @@ Matrix::LU(Matrix &L, Matrix &U, Matrix &P) {
       double val = fabs(A.data[i + j*cols]);
 
       if (val > min) {
-	destrow = j;
-	min = val;
+        destrow = j;
+        min = val;
       }
     }
     assert(min != 0);
@@ -400,7 +366,7 @@ Matrix::LU(Matrix &L, Matrix &U, Matrix &P) {
       ldata = L.data[i+j*rows];
       
       for (int k=i; k < rows; k++) {
-	A.data[k + j*rows] -= ldata * U.data[k + i*rows];
+        A.data[k + j*rows] -= ldata * U.data[k + i*rows];
       }
     }
     L.data[i*cols + i] = 1;
