@@ -74,7 +74,6 @@ Matrix::submatrix(const int row1, const int row2,
   int num_rows=row2-row1+1, num_cols=col2-col1+1;
   Matrix *subm = new Matrix(num_rows, num_cols);
 
-  double *tmpdata = new double[num_rows*num_cols];
   for (int ind_row = 0; ind_row < num_rows; ind_row++) {
     for (int ind_col = 0; ind_col < num_cols; ind_col++) {
       int ind1 = ind_row*num_cols + ind_col;
@@ -90,7 +89,6 @@ Matrix::submatrix(vector <int> subrows, vector <int> subcols) {
     int ncols = subcols.size();
     int nrows = subrows.size();
 
-    double *tmpdata = new double[nrows * ncols];
     int row, col;
     Matrix *mnew = new Matrix(subrows.size(), subcols.size());
 
@@ -108,8 +106,6 @@ Matrix::submatrix(vector <int> subrows, vector <int> subcols) {
 
 Matrix *
 Matrix::add(const Matrix &m2) {
-  double * tmpdata = new double[rows*cols];
-
   assert(rows == m2.rows);
   assert(cols == m2.cols);
   Matrix *mnew = new Matrix(rows, cols, data);
@@ -240,11 +236,8 @@ Matrix::swap_rows(int row1, int row2) {
   assert(row2>= 0 && row2 < rows);
   assert(row1 != row2);
 
-  double tmp;
   for (int ind_col = 0; ind_col < cols; ind_col++) {
-    tmp = data[ind_col + row1*cols];
-    data[ind_col + row1*cols] = data[ind_col + row2*cols];
-    data[ind_col + row2*cols] = tmp;
+    swap(data[ind_col + row1*cols], data[ind_col + row2*cols]);
   }
 }
 
@@ -254,11 +247,8 @@ Matrix::swap_cols(int col1, int col2) {
   assert(col2>= 0 && col2 < cols);
   assert(col1 != col2);
 
-  double tmp;
   for (int ind_row = 0; ind_row < rows; ind_row++) {
-    tmp = data[col1 + ind_row*cols];
-    data[col1 + ind_row*cols] = data[col2 + ind_row*cols];
-    data[col2 + ind_row*cols] = tmp;
+    swap(data[col1 + ind_row*cols], data[col2 + ind_row*cols]);
   }
 }
 
